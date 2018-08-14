@@ -54,6 +54,8 @@ I've already built a [Javascript calculator](https://codepen.io/CTKShadow/pen/LB
 
 #### Final Thoughts
 
+It turns out rounding in Javascript is pretty tricky, due to floating point issues. A simple round to x decimal places can be accomplished with `Math.round(n*10**x)/10**x`, but this doesn't always round in a predictable way: for example, 1.005 rounded to 2 decimal places will return 1, not 1.01. Using n.toFixed(2) will cause the given decimals to always show, so `10.25.toFixed(4)` will return `"10.2500"` rather than `"10.25"` (and also has issues with floating point). Using `Math.round(n + "e+2") + "e-2"` also causes bugs. In the end, I decided to leverage an existing solution, and tweak it to handle what I needed. Credit is in the code comments.
+ 
 To be filled out upon project completion.
 
 ## Miscellaneous
