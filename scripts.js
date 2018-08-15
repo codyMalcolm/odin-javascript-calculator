@@ -29,10 +29,15 @@ const retrieveMemoryBtn = container.querySelector('.retrieve-memory');
 const backspaceBtn = container.querySelector('.backspace');
 const reverseSignBtn = container.querySelector('.reverse-sign');
 const decimalBtn = container.querySelector('.decimal');
-const numberBtns = container.querySelectorAll('.number');
-const operatorBtns = container.querySelectorAll('.operator');
-const bracketBtns = container.querySelectorAll('.bracket');
+const numberBtns = [...container.querySelectorAll('.number')];
+const operatorBtns = [...container.querySelectorAll('.operator')];
+const bracketBtns = [...container.querySelectorAll('.bracket')];
 
+const numbers = numberBtns.map(b => b.dataset.number);
+const operators = operatorBtns.map(b => b.dataset.operator);
+const brackets = bracketBtns.map(b => b.dataset.bracket);
+
+window.addEventListener('keydown', handleKey);
 softClearBtn.addEventListener('click', softClear);
 hardClearBtn.addEventListener('click', hardClear);
 storeMemoryBtn.addEventListener('click', storeMemory);
@@ -100,6 +105,29 @@ function root(x, y) {
   return roundFix(parseFloat(x)**(divide(1, y)), -13)
 }
 
+function handleKey(e) {
+  if (numbers.includes(e.key)) handleNumber(e.key);
+  if (operators.includes(e.key)) handleOperator(e.key);
+  if (brackets.includes(e.key)) handleBracket(e.key);
+  switch (e.key) {
+    case '.':
+      decimal();
+      break;
+    case 'Enter': case '=':
+      calculate();
+      break;
+    case 'Backspace':
+      backspace();
+      break;
+    case '^':
+      handleOperator('**');
+      break;
+    case 'Escape':
+      softClear();
+      break;
+  }
+}
+
 function decimal() {
   if (input.indexOf('.') === -1) {
     input += '.';
@@ -108,21 +136,35 @@ function decimal() {
 }
 
 function number() {
+  handleNumber(this.dataset.number);
+}
+
+function handleNumber(num) {
   if (input === '0') input = '';
   if (input === '-0') input = '-';
-  if (input.slice(-1) !== ')') input += this.dataset.number;
+  if (input.slice(-1) !== ')') input += num;
   updateDisplay();
 }
 
 function operator() {
-  let symbol = displayOperator(this.dataset.operator);
-  input = input+symbol;
-  if ((input.match(/\(/g) || []).length !== (input.match(/\)/g) || []).length) {
-    updateDisplay();
-  } else {
-    output += input;
-    input = '0';
+  handleOperator(this.dataset.operator);
+}
+
+function handleOperator(oper) {
+  if (!output && (input === '0' || input === '-0')) return;
+  let symbol = displayOperator(oper);
+  if (input === '0' || input === '-0') {
+    output = output.slice(0, -1) + symbol;
     updateOutputDisplay();
+  } else {
+    input = input+symbol;
+    if ((input.match(/\(/g) || []).length !== (input.match(/\)/g) || []).length) {
+      updateDisplay();
+    } else {
+      output += input;
+      input = '0';
+      updateOutputDisplay();
+    }
   }
 }
 
@@ -135,11 +177,15 @@ function displayOperator(sym) {
 
 // TODO: refactor with moar regex
 function bracket() {
-  if (this.dataset.bracket === '(') {
+  handleBracket(this.dataset.bracket);
+}
+
+function handleBracket(bracket) {
+  if (bracket === '(') {
     if (input === '0') {
       input = '(';
     } else if (input === '-0') {
-       input = '-(';
+      input = '-(';
     } else if (input.slice(-1) === '(') {
       input += '(';
     }
@@ -208,6 +254,7 @@ function updateOutputDisplay() {
   updateDisplay();
 }
 
+// TODO: handle overflow
 function updateDisplay() {
   inputDisplay.textContent = input;
 }
