@@ -64,9 +64,12 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #333333;
   color: #CCCCCC;
   font-size: 2em;
+}
+
+.number, .decimal {
+  background-color: #333333;
 }
 
 .calculate {
