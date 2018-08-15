@@ -1,0 +1,98 @@
+@font-face {
+  font-family: 'digitalSeven';
+  src: url('fonts/digital-7 (mono).ttf') format('truetype');
+}
+
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100vw;
+  height: 100vh;
+}
+
+.container {
+  height: 80%;
+  background-color: black;
+  display: grid;
+  grid-template-rows: 3fr 8fr;
+  grid-gap: 1px;
+}
+
+.display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.25em;
+  font-size: 1em;
+}
+
+.output-display {
+  border-radius: 1em;
+  border: 3px solid hsla(0, 0%, 50%, 0.5);
+  font-size: 1.5em;
+  background-color: hsla(0, 0%, 50%, 0.25);
+}
+
+.input-display {
+  font-size: 3em;
+}
+
+.output-display, .input-display {
+  padding: 0 1em;
+  color: white;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  color: #FFC000;
+}
+
+.display p {
+  font-family: 'digitalSeven', monospace;
+}
+
+.button-area {
+  display: grid;
+  grid-template: repeat(4, 1fr) / repeat(7, 1fr);
+  grid-gap: 1px;
+}
+
+.button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #333333;
+  color: #CCCCCC;
+  font-size: 2em;
+}
+
+.calculate {
+  grid-area: 3 / 7 / span 2 / span 1;
+}
+
+.zero {
+  grid-area: 4 / 3 / span 1 / span 2;
+}
+
+.soft-clear {
+  background-color: hsl(0, 35%, 35%);
+}
+
+.hard-clear {
+  background-color: hsl(0, 35%, 50%);
+}
+
+.function {
+  background-color: hsl(240, 25%, 25%);
+}
+
+.operator {
+  background-color: hsl(30, 15%, 45%);
+}
+
+.calculate {
+  background: hsl(30, 15%, 40%);
+}
