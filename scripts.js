@@ -19,6 +19,16 @@ function roundFix(value, exp) {
   return +(value[0] + 'e' + (value[1] ? (+value[1] + exp) : exp));
 }
 
+const container = document.querySelector('.container');
+
+//maintain aspect ratio
+window.addEventListener('resize', handleResize);
+// TODO: Add a debouncer
+function handleResize() {
+  container.style.width = (container.offsetHeight / 11) * 14 + "px";
+}
+handleResize();
+
 function add(x, y) {
 
 }
@@ -83,7 +93,7 @@ function updateDisplay() {
 
 }
 
-function saveMemory() {
+function storeMemory() {
 
 }
 
