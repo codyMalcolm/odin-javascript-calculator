@@ -15,7 +15,7 @@ body {
   height: 80%;
   background-color: black;
   display: grid;
-  grid-template-rows: 3fr 8fr;
+  grid-template-rows: 10em 1fr;
   grid-gap: 1px;
 }
 
