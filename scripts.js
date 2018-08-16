@@ -246,29 +246,71 @@ function calculate() {
   displayResult();
 }
 
-// TODO: doesn't handle decimals...
+// TODO: when input already has a decimal number can't add another
+// TODO: can put operator immediately after brackets`
+// TODO: When there is a bracket equation, "-x" puts the - in the wrong spot
 
 function parseOutput(string) {
+  function testForTrickyNegatives(str, index) {
+    return (index === 1 && str.charAt(0) === '-') || (index > 0 && str.charAt(index-1) === '-' && /[\+\-\*÷]/.test(str.charAt(index-2)))
+  }
+
+  function removeTrickyNegative(str, index) {
+    return str.substring(0, index-1) + str.substring(index)
+  }
+
+  // Solve brackets from innermost to outermost
   const innerBrackets = /\([^()]+\)/;
   while (innerBrackets.test(string)) {
     string = string.replace(innerBrackets, parseOutput(string.match(innerBrackets)[0].substr(1, string.match(innerBrackets)[0].length-2)));
   }
-  const carrot = /\d+\^\d+/;
+
+  // Handle sloppy user input of the nature "12.+3"
+  const trailingDecimal = /(\.\D|\.$)/;
+  while (trailingDecimal.test(string)) {
+    const pos = trailingDecimal.exec(string)['index'] + 1;
+    string = string.slice(0, pos) + '0' + string.slice(pos);
+  }
+
+  // Solve exponents
+  const carrot = /\d+(\.\d+)?\^\-?\d+(\.\d+)?/;
   while (carrot.test(string)) {
-    let arr = string.match(carrot)[0].split('^');
-    string = string.replace(carrot, operate("**", arr[0], arr[1]));
+    let match = string.match(carrot)[0];
+    const index = string.indexOf(match);
+    let arr = match.split('^');
+    if (testForTrickyNegatives(string, index)) {
+      string = removeTrickyNegative(string, index);
+      string = string.replace(carrot, operate("**", '-' + arr[0], arr[1]));
+    } else {
+      string = string.replace(carrot, operate("**", arr[0], arr[1]));
+    }
   }
-  const divAndMult = /(\d+\*\d+|\d+÷\d+)/
+
+  // Solve multiplication and division
+  const divAndMult = /(\d+(\.\d+)?\*\-?\d+(\.\d+)?|\d+(\.\d+)?÷\-?\d+(\.\d+)?)/
   while (divAndMult.test(string)) {
+    let match = string.match(divAndMult)[0];
+    const index = string.indexOf(match);
     let oper = /(\*|÷)/.exec(string)[0];
-    let arr = string.match(divAndMult)[0].split(oper);
-    string = string.replace(divAndMult, operate(oper, arr[0], arr[1]));
+    let arr = match.split(oper);
+    if (testForTrickyNegatives(string, index)) {
+      string = removeTrickyNegative(string, index);
+      string = string.replace(divAndMult, operate(oper, '-' + arr[0], arr[1]));
+    } else {
+      string = string.replace(divAndMult, operate(oper, arr[0], arr[1]));
+    }
   }
-  const addAndSub = /(\d+\+\d+|\d+\-\d+)/
+
+  // TODO: refactor to be less gross
+  // Solve addition and subtraction
+  const addAndSub = /(.\-|\+)/;
   while (addAndSub.test(string)) {
-    let oper = /(\+|\-)/.exec(string)[0];
-    let arr = string.match(addAndSub)[0].split(oper);
-    string = string.replace(addAndSub, operate(oper, arr[0], arr[1]));
+    let numRegex = /.\d*(\.\d+)?/;
+    let firstNum = string.match(numRegex)[0];
+    let oper = string.substr(firstNum.length, 1);
+    string = string.substring(firstNum.length+1);
+    let secondNum = string.match(numRegex)[0];
+    string = operate(oper, firstNum, secondNum) + string.substring(secondNum.length);
   }
   return string;
 }
