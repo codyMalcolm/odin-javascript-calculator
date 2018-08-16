@@ -19,6 +19,8 @@ function roundFix(value, exp) {
   return +(value[0] + 'e' + (value[1] ? (+value[1] + exp) : exp));
 }
 
+// TODO: refactor checks for 0 / -0;
+
 const container = document.querySelector('.container');
 const outputDisplay = container.querySelector('.output');
 const inputDisplay = container.querySelector('.input');
@@ -29,6 +31,7 @@ const retrieveMemoryBtn = container.querySelector('.retrieve-memory');
 const backspaceBtn = container.querySelector('.backspace');
 const reverseSignBtn = container.querySelector('.reverse-sign');
 const decimalBtn = container.querySelector('.decimal');
+const calculateBtn = container.querySelector('.calculate');
 const numberBtns = [...container.querySelectorAll('.number')];
 const operatorBtns = [...container.querySelectorAll('.operator')];
 const bracketBtns = [...container.querySelectorAll('.bracket')];
@@ -45,6 +48,7 @@ retrieveMemoryBtn.addEventListener('click', retrieveMemory);
 backspaceBtn.addEventListener('click', backspace);
 reverseSignBtn.addEventListener('click', reverseSign);
 decimalBtn.addEventListener('click', decimal);
+calculateBtn.addEventListener('click', calculate);
 
 numberBtns.forEach(button => {
   button.addEventListener('click', number);
@@ -101,10 +105,6 @@ function exponent(x, y) {
   return roundFix(parseFloat(x)**parseFloat(y), -13);
 }
 
-function root(x, y) {
-  return roundFix(parseFloat(x)**(divide(1, y)), -13)
-}
-
 function handleKey(e) {
   if (numbers.includes(e.key)) handleNumber(e.key);
   if (operators.includes(e.key)) handleOperator(e.key);
@@ -156,6 +156,9 @@ function handleOperator(oper) {
   if (input === '0' || input === '-0') {
     output = output.slice(0, -1) + symbol;
     updateOutputDisplay();
+  } else if (/[+\-*÷^]$/.test(input)) {
+    input = input.slice(0, -1) + symbol;
+    updateDisplay();
   } else {
     input = input+symbol;
     if ((input.match(/\(/g) || []).length !== (input.match(/\)/g) || []).length) {
@@ -186,11 +189,11 @@ function handleBracket(bracket) {
       input = '(';
     } else if (input === '-0') {
       input = '-(';
-    } else if (input.slice(-1) === '(') {
+    } else if (/\D$/.test(input)) {
       input += '(';
     }
   } else {
-    if ((input.match(/\(/g) || []).length > (input.match(/\)/g) || []).length && /\d/.test(input.slice(-1))) input += ')';
+    if ((input.match(/\(/g) || []).length > (input.match(/\)/g) || []).length && /[^(+\-*÷^]/.test(input.slice(-1))) input += ')';
   }
   updateDisplay();
 }
@@ -223,19 +226,51 @@ function operate(operator, x, y) {
       return subtract(x, y);
     case '*':
       return multiply(x, y);
-    case '/':
+    case '÷':
       return divide(x, y);
     case '**':
       return exponent(x, y);
-      // is root necessary?
-    case '**1/':
-      return root(x, y);
   }
 }
 
+// TODO: clear the result variable once further input
 function calculate() {
-
+  if (output && input === '0' || input === '-0') {
+    output = output.slice(0, -1) + '='
+  } else {
+    output += input;
+  }
+  result = parseOutput(output);
+  output += '=';
+  updateOutputDisplay();
   displayResult();
+}
+
+// TODO: doesn't handle decimals...
+
+function parseOutput(string) {
+  const innerBrackets = /\([^()]+\)/;
+  while (innerBrackets.test(string)) {
+    string = string.replace(innerBrackets, parseOutput(string.match(innerBrackets)[0].substr(1, string.match(innerBrackets)[0].length-2)));
+  }
+  const carrot = /\d+\^\d+/;
+  while (carrot.test(string)) {
+    let arr = string.match(carrot)[0].split('^');
+    string = string.replace(carrot, operate("**", arr[0], arr[1]));
+  }
+  const divAndMult = /(\d+\*\d+|\d+÷\d+)/
+  while (divAndMult.test(string)) {
+    let oper = /(\*|÷)/.exec(string)[0];
+    let arr = string.match(divAndMult)[0].split(oper);
+    string = string.replace(divAndMult, operate(oper, arr[0], arr[1]));
+  }
+  const addAndSub = /(\d+\+\d+|\d+\-\d+)/
+  while (addAndSub.test(string)) {
+    let oper = /(\+|\-)/.exec(string)[0];
+    let arr = string.match(addAndSub)[0].split(oper);
+    string = string.replace(addAndSub, operate(oper, arr[0], arr[1]));
+  }
+  return string;
 }
 
 function softClear() {
