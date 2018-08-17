@@ -145,7 +145,7 @@ function handleNumber(num) {
   checkResult();
   if (input === '0') input = '';
   if (input === '-0') input = '-';
-  if (input.slice(-1) !== ')') input += num;
+  if (input.slice(-1) !== ')' && input.slice(-2) !== '(0') input += num;
   updateDisplay();
 }
 
@@ -159,7 +159,7 @@ function handleOperator(oper) {
     input = result;
     result = '';
   }
-  if (!output && (input === '0' || input === '-0')) return;
+  if ((!output && (input === '0' || input === '-0')) || input.slice(-1) === '(') return;
   let symbol = displayOperator(oper);
   if (input === '0' || input === '-0') {
     output = output.slice(0, -1) + symbol;
@@ -280,11 +280,6 @@ function calculate() {
   updateOutputDisplay();
   displayResult();
 }
-
-// TODO: when input already has a decimal number can't add another
-// TODO: can put operator immediately after brackets`
-// TODO: When there is a bracket equation, "-x" puts the - in the wrong spot
-// TODO: can add multiple zeros after a bracket
 
 function parseOutput(string) {
   function testForTrickyNegatives(str, index) {
