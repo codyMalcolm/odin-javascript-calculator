@@ -70,11 +70,13 @@ let input = '0'; // stores number being currently entered
 let result = ''; // stores last result (until next calculation started)
 let memory = ''; // stores memory value
 
+
 //maintain aspect ratio
 window.addEventListener('resize', handleResize);
 // TODO: Add a debouncer
 function handleResize() {
   container.style.width = (container.offsetHeight / 11) * 14 + "px";
+  updateDisplay()
 }
 handleResize();
 
@@ -159,7 +161,6 @@ function displayOperator(sym) {
   return sym;
 }
 
-// TODO: refactor with moar regex
 function bracket() {
   handleBracket(this.dataset.bracket);
 }
@@ -348,7 +349,7 @@ function calculate() {
   } else {
     output += input;
   }
-  result = parseOutput(output);
+  result = roundFix(parseFloat(parseOutput(output)), -10).toString();
   output += '=';
   updateOutputDisplay();
   displayResult();
@@ -371,9 +372,16 @@ function updateOutputDisplay() {
   updateDisplay();
 }
 
-// TODO: handle overflow
 function updateDisplay() {
   inputDisplay.textContent = input;
+  if (container.clientWidth-120 < inputDisplay.clientWidth) {
+    inputDisplay.style.fontSize = '0.5em';
+  } else {
+    inputDisplay.style.fontSize = '1em';
+    if (container.clientWidth-120 < inputDisplay.clientWidth) {
+      inputDisplay.style.fontSize = '0.5em';
+    }
+  }
 }
 
 function displayResult() {
