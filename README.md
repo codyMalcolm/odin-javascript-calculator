@@ -10,8 +10,8 @@ To build a calculator using Javascript, HTML, and CSS.
 
 1. The calculator should contain all of the basic mathematical functions (`+`, `-`, `*`, and `-`).
 2. There are some specific requirements for how the program should be structured.
-* The operations should be handled in separate functions and returned to the `operate()` function.
-* The `operate()` function takes two numbers and an operator.
+  * The operations should be handled in separate functions and returned to the `operate()` function.
+  * The `operate()` function takes two numbers and an operator.
 3. The calculator should have buttons for each operator, each of the numbers, equals, and clear.
 4. The calculator should have a display.
 5. The display should update with the solution to the operation once `=` is pressed.
@@ -33,8 +33,8 @@ To build a calculator using Javascript, HTML, and CSS.
 
 1. Should the calculator observe order of operations or apply operations in the order entered?
 2. What should happen if the user presses `=`, returing a result, and then immediately presses:
- * an operator?
- * a number?
+  * an operator?
+  * a number?
 3. How many decimals should we round long numbers to?
 
 ##### Personal Extras
