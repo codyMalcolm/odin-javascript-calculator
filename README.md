@@ -41,6 +41,8 @@ To build a calculator using Javascript, HTML, and CSS.
 
 1. Add support for parenthesis.
 2. Add support for exponents and roots.
+3. Add support for entering negative numbers.
+4. Add support for memory storage.
 
 #### Learning Objectives
 
@@ -66,7 +68,12 @@ Further to floating point weirdness, a decision needed to be made about when to 
 
 But the correct answer obviously should have been "undefined." So to minimize bugs like the above, while preserving the maximum amount of accuracy, after every calculation (add, subtract, multiply, etc), results will be rounded to 13 or 14 decimal places, and the final result will be rounded to 10 decimal places.
 
-To be filled out upon project completion.
+I could write a lot more about the completion of this project, so I'll try to just make some brief points:
+* I got a lot of practice with regular expressions.
+* There are several instances where repeated code could be refactored. For example, in several places I check to see if input is either '0' or '-0'.
+* Similarly, there are several instances where I could use regex in data validation to perhaps streamline some of the conditional logic.
+* My largest dissatisfaction with how the program is structured is related to the brackets. Currently, when an operator is pressed, the previously entered number and the operator are moved to the top display and the input is cleared. However, early I made a decision that if a bracket is being used, the user could enter the whole bracket subequation before having the input moved to the upper display. A major consequence of this decision is that once I started implementing checks to prevent invalid input (such as `0(+)-^.`), I had to essentially handle the checks for "empty" input in completely separate ways depending on if the input was "empty with no brackets" ('0' or '-0') or "empty with brackets" (eg. '(35+)'). When combined with the other logic required to prevent flawed input, this results in some pretty ugly conditional logic in some parts of the program. The two reasons I originally decided to handle brackets this way were to make it easier to visualize that the brackets were closed, and to allow the user to remove brackets they don't want. Ultimately, however, if I was to rebuild this project, I'd have brackets immediately moved to the upper display so valid input test is more predictable and less validation is required.
+* Parsing the data was pretty interesting, but for the most part recursion handled the brackets and regex did the rest. The most difficult part was just trying to figure out how many different ways input could be flawed. For a while it seemed that every time I fixed an exception, while testing I would accidentally stumble upon two more that I hadn't yet considered. This is why `TODO` exists.
 
 ## Miscellaneous
 
