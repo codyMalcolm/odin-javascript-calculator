@@ -129,7 +129,9 @@ function handleKey(e) {
 }
 
 function decimal() {
-  if (input.indexOf('.') === -1) {
+  checkResult();
+  const lastOperator = (input.match(/[\+\-\*÷\^]/g) || ['!']).slice(-1);
+  if (input.lastIndexOf('.') <= Math.max(0, input.lastIndexOf(lastOperator))) {
     input += '.';
   }
   updateDisplay();
@@ -140,6 +142,7 @@ function number() {
 }
 
 function handleNumber(num) {
+  checkResult();
   if (input === '0') input = '';
   if (input === '-0') input = '-';
   if (input.slice(-1) !== ')') input += num;
@@ -151,6 +154,11 @@ function operator() {
 }
 
 function handleOperator(oper) {
+  if (result) { //consider last result this input
+    output = '';
+    input = result;
+    result = '';
+  }
   if (!output && (input === '0' || input === '-0')) return;
   let symbol = displayOperator(oper);
   if (input === '0' || input === '-0') {
@@ -184,6 +192,7 @@ function bracket() {
 }
 
 function handleBracket(bracket) {
+  checkResult();
   if (bracket === '(') {
     if (input === '0') {
       input = '(';
@@ -199,11 +208,35 @@ function handleBracket(bracket) {
 }
 
 function reverseSign() {
-  input = input.charAt(0) === '-' ? input.slice(1) : '-' + input;
+  if (result) { //consider last result this input
+    output = '';
+    input = result;
+    result = '';
+  }
+  if (input.indexOf('(') === -1 || (input.lastIndexOf(')') === input.length - 1 && (input.match(/\(/g) || []).length === (input.match(/\)/g) || []).length)) { //if there are no brackers or if brackets are matched
+    input = input.charAt(0) === '-' ? input.slice(1) : '-' + input;
+  } else {
+    if (/\d+(\.\d+)?$/.test(input)) {
+      const match = input.match(/\d+(\.\d+)?$/);
+      const pos = match['index'];
+      if (input.charAt(pos-1) !== '-') {
+        input = input.slice(0, pos) + '-' + match[0];
+      } else {
+        input = input.slice(0, pos-1) + match[0];
+      }
+    } else {
+      if (input.slice(-1) !== '-') {
+        input += '-';
+      } else {
+        input = input.slice(0, -1);
+      }
+    }
+  }
   updateDisplay();
 }
 
 function backspace() {
+  checkResult();
   if (input.length === 1) {
     input = '0';
   } else if (input.length === 2 && input.charAt(0) === '-') {
@@ -212,10 +245,6 @@ function backspace() {
     input = input.slice(0, -1);
   }
   updateDisplay();
-}
-
-function handleZero() {
-
 }
 
 function operate(operator, x, y) {
@@ -233,8 +262,14 @@ function operate(operator, x, y) {
   }
 }
 
-// TODO: clear the result variable once further input
+function checkResult() {
+  if (result) {
+    hardClear();
+  }
+}
+
 function calculate() {
+  if (result) return;
   if (output && input === '0' || input === '-0') {
     output = output.slice(0, -1) + '='
   } else {
@@ -249,6 +284,7 @@ function calculate() {
 // TODO: when input already has a decimal number can't add another
 // TODO: can put operator immediately after brackets`
 // TODO: When there is a bracket equation, "-x" puts the - in the wrong spot
+// TODO: can add multiple zeros after a bracket
 
 function parseOutput(string) {
   function testForTrickyNegatives(str, index) {
@@ -270,6 +306,13 @@ function parseOutput(string) {
   while (trailingDecimal.test(string)) {
     const pos = trailingDecimal.exec(string)['index'] + 1;
     string = string.slice(0, pos) + '0' + string.slice(pos);
+  }
+
+  // Handle sloppy user input of the nature "(.12)+3"
+  const leadingDecimal = /(\D\.|^\.)/;
+  while (leadingDecimal.test(string)) {
+    const pos = leadingDecimal.exec(string)['index'];
+    string = pos ? string.slice(0, pos+1) + '0' + string.slice(pos+1) : '0' + string;
   }
 
   // Solve exponents
@@ -323,6 +366,7 @@ function softClear() {
 function hardClear() {
   output = '';
   input = '0';
+  result = '';
   updateOutputDisplay();
 }
 
