@@ -74,6 +74,7 @@ body {
 
 .calculate {
   grid-area: 3 / 7 / span 2 / span 1;
+  background: hsl(30, 35%, 50%);
 }
 
 .zero {
@@ -94,8 +95,4 @@ body {
 
 .operator {
   background-color: hsl(30, 15%, 45%);
-}
-
-.calculate {
-  background: hsl(30, 15%, 40%);
 }
