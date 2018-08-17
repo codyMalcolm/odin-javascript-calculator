@@ -78,33 +78,6 @@ function handleResize() {
 }
 handleResize();
 
-// calculation functions
-function add(x, y) {
-  return roundFix(parseFloat(x) + parseFloat(y), -14)
-};
-
-function subtract(x, y) {
-  return roundFix(parseFloat(x) - parseFloat(y), -14)
-};
-
-function multiply(x, y) {
-  return roundFix(parseFloat(x) * parseFloat(y), -14)
-};
-
-function divide(x, y) {
-  y = parseFloat(y);
-  if (!y) {
-    return 'undefined';
-  } else {
-    return roundFix(parseFloat(x) / y, -14);
-  }
-}
-
-function exponent(x, y) {
-  return roundFix(parseFloat(x)**parseFloat(y), -13);
-}
-
-
 function handleKey(e) {
   if (numbers.includes(e.key)) handleNumber(e.key);
   if (operators.includes(e.key)) handleOperator(e.key);
@@ -247,21 +220,6 @@ function backspace() {
   updateDisplay();
 }
 
-function operate(operator, x, y) {
-  switch (operator) {
-    case '+':
-      return add(x, y);
-    case '-':
-      return subtract(x, y);
-    case '*':
-      return multiply(x, y);
-    case '÷':
-      return divide(x, y);
-    case '**':
-      return exponent(x, y);
-  }
-}
-
 function checkResult() {
   if (result) {
     hardClear();
@@ -269,6 +227,121 @@ function checkResult() {
 }
 
 function calculate() {
+  function parseOutput(string) {
+    function operate(operator, x, y) {
+      // calculation functions
+      function add(x, y) {
+        return roundFix(parseFloat(x) + parseFloat(y), -14)
+      };
+
+      function subtract(x, y) {
+        return roundFix(parseFloat(x) - parseFloat(y), -14)
+      };
+
+      function multiply(x, y) {
+        return roundFix(parseFloat(x) * parseFloat(y), -14)
+      };
+
+      function divide(x, y) {
+        y = parseFloat(y);
+        if (!y) {
+          return 'undefined';
+        } else {
+          return roundFix(parseFloat(x) / y, -14);
+        }
+      }
+
+      function exponent(x, y) {
+        return roundFix(parseFloat(x)**parseFloat(y), -13);
+      }
+
+      switch (operator) {
+        case '+':
+          return add(x, y);
+        case '-':
+          return subtract(x, y);
+        case '*':
+          return multiply(x, y);
+        case '÷':
+          return divide(x, y);
+        case '**':
+          return exponent(x, y);
+      }
+    }
+    function testForTrickyNegatives(str, index) {
+      return (index === 1 && str.charAt(0) === '-') || (index > 0 && str.charAt(index-1) === '-' && /[\+\-\*÷]/.test(str.charAt(index-2)))
+    }
+    function removeTrickyNegative(str, index) {
+      return str.substring(0, index-1) + str.substring(index)
+    }
+
+    // Solve brackets from innermost to outermost
+    const innerBrackets = /\([^()]+\)/;
+    while (innerBrackets.test(string)) {
+      const innerBracketsResult = parseOutput(string.match(innerBrackets)[0].substr(1, string.match(innerBrackets)[0].length-2));
+
+      string = innerBracketsResult !== 'undefined' ? string.replace(innerBrackets, innerBracketsResult) : innerBracketsResult;
+    }
+
+    // Handle sloppy user input of the nature "12.+3"
+    const trailingDecimal = /(\.\D|\.$)/;
+    while (trailingDecimal.test(string)) {
+      const pos = trailingDecimal.exec(string)['index'] + 1;
+      string = string.slice(0, pos) + '0' + string.slice(pos);
+    }
+
+    // Handle sloppy user input of the nature "(.12)+3"
+    const leadingDecimal = /(\D\.|^\.)/;
+    while (leadingDecimal.test(string)) {
+      const pos = leadingDecimal.exec(string)['index'];
+      string = pos ? string.slice(0, pos+1) + '0' + string.slice(pos+1) : '0' + string;
+    }
+
+    // Solve exponents
+    const carrot = /\d+(\.\d+)?\^\-?\d+(\.\d+)?/;
+    while (carrot.test(string)) {
+      let match = string.match(carrot)[0];
+      const index = string.indexOf(match);
+      let arr = match.split('^');
+      if (testForTrickyNegatives(string, index)) {
+        string = removeTrickyNegative(string, index);
+        string = string.replace(carrot, operate("**", '-' + arr[0], arr[1]));
+      } else {
+        string = string.replace(carrot, operate("**", arr[0], arr[1]));
+      }
+    }
+
+    // Solve multiplication and division
+    const divAndMult = /(\d+(\.\d+)?\*\-?\d+(\.\d+)?|\d+(\.\d+)?÷\-?\d+(\.\d+)?)/
+    while (divAndMult.test(string)) {
+      let match = string.match(divAndMult)[0];
+      const index = string.indexOf(match);
+      let oper = /(\*|÷)/.exec(string)[0];
+      let arr = match.split(oper);
+      let res;
+      if (testForTrickyNegatives(string, index)) {
+        string = removeTrickyNegative(string, index);
+        res = operate(oper, '-' + arr[0], arr[1]);
+      } else {
+        res = operate(oper, arr[0], arr[1]);
+      }
+      string = res !== 'undefined' ? string.replace(divAndMult, res) : res;
+    }
+
+    // TODO: refactor to be less gross
+    // Solve addition and subtraction
+    const addAndSub = /(.\-|\+)/;
+    while (addAndSub.test(string)) {
+      let numRegex = /.\d*(\.\d+)?/;
+      let firstNum = string.match(numRegex)[0];
+      let oper = string.substr(firstNum.length, 1);
+      string = string.substring(firstNum.length+1);
+      let secondNum = string.match(numRegex)[0];
+      string = operate(oper, firstNum, secondNum) + string.substring(secondNum.length);
+    }
+    return string;
+  }
+
   if (result) return;
   if (output && input === '0' || input === '-0') {
     output = output.slice(0, -1) + '='
@@ -279,82 +352,6 @@ function calculate() {
   output += '=';
   updateOutputDisplay();
   displayResult();
-}
-
-function parseOutput(string) {
-  function testForTrickyNegatives(str, index) {
-    return (index === 1 && str.charAt(0) === '-') || (index > 0 && str.charAt(index-1) === '-' && /[\+\-\*÷]/.test(str.charAt(index-2)))
-  }
-
-  function removeTrickyNegative(str, index) {
-    return str.substring(0, index-1) + str.substring(index)
-  }
-
-  // Solve brackets from innermost to outermost
-  const innerBrackets = /\([^()]+\)/;
-  while (innerBrackets.test(string)) {
-    const innerBracketsResult = parseOutput(string.match(innerBrackets)[0].substr(1, string.match(innerBrackets)[0].length-2));
-
-    string = innerBracketsResult !== 'undefined' ? string.replace(innerBrackets, innerBracketsResult) : innerBracketsResult;
-  }
-
-  // Handle sloppy user input of the nature "12.+3"
-  const trailingDecimal = /(\.\D|\.$)/;
-  while (trailingDecimal.test(string)) {
-    const pos = trailingDecimal.exec(string)['index'] + 1;
-    string = string.slice(0, pos) + '0' + string.slice(pos);
-  }
-
-  // Handle sloppy user input of the nature "(.12)+3"
-  const leadingDecimal = /(\D\.|^\.)/;
-  while (leadingDecimal.test(string)) {
-    const pos = leadingDecimal.exec(string)['index'];
-    string = pos ? string.slice(0, pos+1) + '0' + string.slice(pos+1) : '0' + string;
-  }
-
-  // Solve exponents
-  const carrot = /\d+(\.\d+)?\^\-?\d+(\.\d+)?/;
-  while (carrot.test(string)) {
-    let match = string.match(carrot)[0];
-    const index = string.indexOf(match);
-    let arr = match.split('^');
-    if (testForTrickyNegatives(string, index)) {
-      string = removeTrickyNegative(string, index);
-      string = string.replace(carrot, operate("**", '-' + arr[0], arr[1]));
-    } else {
-      string = string.replace(carrot, operate("**", arr[0], arr[1]));
-    }
-  }
-
-  // Solve multiplication and division
-  const divAndMult = /(\d+(\.\d+)?\*\-?\d+(\.\d+)?|\d+(\.\d+)?÷\-?\d+(\.\d+)?)/
-  while (divAndMult.test(string)) {
-    let match = string.match(divAndMult)[0];
-    const index = string.indexOf(match);
-    let oper = /(\*|÷)/.exec(string)[0];
-    let arr = match.split(oper);
-    let res;
-    if (testForTrickyNegatives(string, index)) {
-      string = removeTrickyNegative(string, index);
-      res = operate(oper, '-' + arr[0], arr[1]);
-    } else {
-      res = operate(oper, arr[0], arr[1]);
-    }
-    string = res !== 'undefined' ? string.replace(divAndMult, res) : res;
-  }
-
-  // TODO: refactor to be less gross
-  // Solve addition and subtraction
-  const addAndSub = /(.\-|\+)/;
-  while (addAndSub.test(string)) {
-    let numRegex = /.\d*(\.\d+)?/;
-    let firstNum = string.match(numRegex)[0];
-    let oper = string.substr(firstNum.length, 1);
-    string = string.substring(firstNum.length+1);
-    let secondNum = string.match(numRegex)[0];
-    string = operate(oper, firstNum, secondNum) + string.substring(secondNum.length);
-  }
-  return string;
 }
 
 function softClear() {
