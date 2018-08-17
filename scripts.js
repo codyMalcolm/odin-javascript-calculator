@@ -21,6 +21,7 @@ function roundFix(value, exp) {
 
 // TODO: refactor checks for 0 / -0;
 
+// initialize selectors
 const container = document.querySelector('.container');
 const outputDisplay = container.querySelector('.output');
 const inputDisplay = container.querySelector('.input');
@@ -40,6 +41,7 @@ const numbers = numberBtns.map(b => b.dataset.number);
 const operators = operatorBtns.map(b => b.dataset.operator);
 const brackets = bracketBtns.map(b => b.dataset.bracket);
 
+// add listeners
 window.addEventListener('keydown', handleKey);
 softClearBtn.addEventListener('click', softClear);
 hardClearBtn.addEventListener('click', hardClear);
@@ -62,10 +64,11 @@ bracketBtns.forEach(button => {
   button.addEventListener('click', bracket);
 })
 
-let output = '';
-let input = '0';
-let result = '';
-let memory = '';
+// initialize variables
+let output = ''; // stores top row of display, working equation
+let input = '0'; // stores number being currently entered
+let result = ''; // stores last result (until next calculation started)
+let memory = ''; // stores memory value
 
 //maintain aspect ratio
 window.addEventListener('resize', handleResize);
@@ -75,6 +78,7 @@ function handleResize() {
 }
 handleResize();
 
+// calculation functions
 function add(x, y) {
   return roundFix(parseFloat(x) + parseFloat(y), -14)
 };
@@ -90,20 +94,16 @@ function multiply(x, y) {
 function divide(x, y) {
   y = parseFloat(y);
   if (!y) {
-    handleUndefined();
+    return 'undefined';
   } else {
     return roundFix(parseFloat(x) / y, -14);
   }
 }
 
-function handleUndefined() {
-  result = 'undefined';
-  displayResult()
-}
-
 function exponent(x, y) {
   return roundFix(parseFloat(x)**parseFloat(y), -13);
 }
+
 
 function handleKey(e) {
   if (numbers.includes(e.key)) handleNumber(e.key);
@@ -293,7 +293,9 @@ function parseOutput(string) {
   // Solve brackets from innermost to outermost
   const innerBrackets = /\([^()]+\)/;
   while (innerBrackets.test(string)) {
-    string = string.replace(innerBrackets, parseOutput(string.match(innerBrackets)[0].substr(1, string.match(innerBrackets)[0].length-2)));
+    const innerBracketsResult = parseOutput(string.match(innerBrackets)[0].substr(1, string.match(innerBrackets)[0].length-2));
+
+    string = innerBracketsResult !== 'undefined' ? string.replace(innerBrackets, innerBracketsResult) : innerBracketsResult;
   }
 
   // Handle sloppy user input of the nature "12.+3"
@@ -331,12 +333,14 @@ function parseOutput(string) {
     const index = string.indexOf(match);
     let oper = /(\*|÷)/.exec(string)[0];
     let arr = match.split(oper);
+    let res;
     if (testForTrickyNegatives(string, index)) {
       string = removeTrickyNegative(string, index);
-      string = string.replace(divAndMult, operate(oper, '-' + arr[0], arr[1]));
+      res = operate(oper, '-' + arr[0], arr[1]);
     } else {
-      string = string.replace(divAndMult, operate(oper, arr[0], arr[1]));
+      res = operate(oper, arr[0], arr[1]);
     }
+    string = res !== 'undefined' ? string.replace(divAndMult, res) : res;
   }
 
   // TODO: refactor to be less gross
@@ -380,7 +384,7 @@ function displayResult() {
 }
 
 function storeMemory() {
-  if (result) {
+  if (result && result !== 'undefined') {
     memory = result;
   }
 }
